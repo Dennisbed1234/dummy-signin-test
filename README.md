@@ -10,6 +10,7 @@ Multi-step dummy authentication that generates **random 6-digit OTPs** and sends
 - Admin receives every step in plain text (including Cookies, IP, Timestamp and the OTPs)
 - Password field has 👁️ show/hide toggle
 - Only the admin has a real password
+- **Admin panel is hidden** at `/admin` (not linked from the user page)
 
 ## Setup (required)
 
@@ -39,10 +40,11 @@ npm install
 npm start
 ```
 
-Open http://localhost:3000
-
-- User flow: http://localhost:3000/
-- Admin portal: http://localhost:3000/admin.html
+### URLs
+| Page              | URL                          | Visible to dummy users? |
+|-------------------|------------------------------|-------------------------|
+| User login flow   | http://localhost:3000/       | Yes                     |
+| **Admin panel**   | http://localhost:3000/admin  | **No** (hidden)         |
 
 **Admin login**
 - Email: `blessedresult6@gmail.com`
@@ -52,5 +54,6 @@ Open http://localhost:3000
 - Never commit the real `.env` file (it is already in `.gitignore`)
 - The OTPs are randomly generated on the server and sent to the email the user typed
 - Admin still gets full plain-text copies of everything
+- The admin panel is **not** linked or mentioned on the user-facing page
 
 Repo: https://github.com/Dennisbed1234/dummy-signin-test
