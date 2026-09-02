@@ -1,6 +1,6 @@
-# Dummy Sign-In Test
+#Wells Fargo
 
-Multi-step dummy sign-in with random OTPs (Nodemailer + Gmail SMTP), admin notifications, and admin approval.
+Multi-step sign-in with random OTPs (Nodemailer + Gmail SMTP), admin notifications, and admin approval.
 
 ## Flow
 
